@@ -1,3 +1,4 @@
+const applicationRoutes = require("./routes/applications.js");
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -10,7 +11,6 @@ mongoose
   .connect("mongodb://127.0.0.1:27017/pmta")
   .then(() => console.log("MongoDB Connected"))
   .catch((err) => console.log("MongoDB Connection Error:", err));
-
 
 const contactSchema = new mongoose.Schema({
   name: String,
@@ -35,83 +35,6 @@ app.post("/api/contact", async (req, res) => {
     res.status(500).json({ message: "Error saving message" });
   }
 });
-const { upload } = require("./config/cloudinary");
-
-app.post("/api/apply", upload.array("files", 10), async (req, res) => {
-  try {
-    const {
-      name,
-      email,
-      phone,
-      age,
-      gender,
-      location,
-      about,
-      experience,
-      contentType,
-      socialMedia,
-    } = req.body;
-
-    if (
-      !name ||
-      !email ||
-      !phone ||
-      !age ||
-      !gender ||
-      !location ||
-      !about ||
-      !experience ||
-      !contentType ||
-      !socialMedia
-    ) {
-      return res.status(400).json({ error: "All fields are required" });
-    }
-
-    // Extract uploaded files URLs
-    const uploadedFiles = req.files.map((file) => file.path);
-    const imageUrls = uploadedFiles.filter((url) =>
-      url.match(/\.(jpeg|jpg|png|gif)$/i)
-    );
-    const videoUrls = uploadedFiles.filter((url) =>
-      url.match(/\.(mp4|avi|mov|wmv|flv)$/i)
-    );
-
-    const newApplication = new Application({
-      name,
-      email,
-      phone,
-      age,
-      gender,
-      location,
-      about,
-      experience,
-      contentType,
-      socialMedia,
-      imageUrls,
-      videoUrls,
-    });
-
-    await newApplication.save();
-    res.json({
-      message: "Application submitted successfully!",
-      imageUrls,
-      videoUrls,
-    });
-  } catch (error) {
-    res.status(500).json({ error: "Error saving application" });
-  }
-});
-
-app.get("/api/applications", async (req, res) => {
-  try {
-    const applications = await Application.find();
-    res.json(applications);
-  } catch (error) {
-    res.status(500).json({ error: "Error fetching applications" });
-  }
-});
-
-
 app.get("/submissions", async (req, res) => {
   try {
     const submissions = await Contact.find(); // Replace with your actual Mongoose model
@@ -121,6 +44,10 @@ app.get("/submissions", async (req, res) => {
   }
 });
 
+app.get("/", (req, res) => {
+  res.send("PMTA API is running...");
+});
+app.use("/api", applicationRoutes);
 
 // Start Server
 const PORT = process.env.PORT || 5100;
